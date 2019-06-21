@@ -3,9 +3,7 @@ package com.enoxs.interview.Arrays;
 import com.enoxs.util.TestUtil;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -24,40 +22,61 @@ public class MinimumSwaps2 extends TestUtil {
      * 5   [1, 2, 3, 4, 5, 6, 7]
      */
     protected int minimumSwaps(int[] arr) {
-        int len = arr.length;
+        int[] sort = Arrays.copyOf(arr, arr.length);
+        Arrays.sort(sort);
 
-        int max = arr[0];
-        int maxPos = 0;
-        for (int i = 0; i < arr.length; i++) {
-            if (max > arr[i]) {
-                max = arr[i];
-                maxPos = i;
-            } else {
-                break;
-            }
-        }
-        int min = len;
-        int minPos = 0;
-        int pos;
-        for (int i = 0; i < arr.length; i++) {
-            pos = len - 1 - i;
-            if (min < arr[pos]) {
-                min = arr[pos];
-                minPos = pos;
-            }else{
-                break;
-            }
+        int swap1Count = 0;
+        int swapNSub1Count = 0;
+
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < sort.length; i++) {
+            map.put(arr[i], sort[i]);
         }
 
-        System.out.println("max: " + max);
-        System.out.println("maxPos: " + maxPos);
-        System.out.println("min: " + min);
-        System.out.println("minPos: " + minPos);
+        int key, pos, count;
+        List<Integer> lstPos = new LinkedList<>();
 
-        int result = 5;
+        for (int i = 0; i < sort.length; i++) {
+            if (arr[i] != sort[i] && arr[i] != 0) {
+                key = map.get(arr[i]);
+                if (map.get(key) == arr[i]) {// swap1Count
+                    swap1Count++;
+                    pos = arr[i] - 1;
+                    arr[i] = 0;
+                    arr[pos] = 0;
+                } else {//swapNSub1Count-1
+                    count = 0;
+                    lstPos.add(i);
+
+                    while (key != arr[i]) {
+                        key = map.get(key);
+
+                        pos = key - 1;
+                        lstPos.add(pos);
+
+                        count++;
+                    }
+
+                    for (Integer index : lstPos) {
+                        arr[index] = 0;
+                    }
+                    lstPos.clear();
+                    swapNSub1Count += count;
+                }
+            }
+        }
+
+        int result = swap1Count + swapNSub1Count;
         return result;
     }
 
+    @Test
+    public void testDemoCase() {
+        int[] input = {2, 4, 5, 1, 3};
+        int actual = minimumSwaps(input);
+        int expect = 3;
+        assertEquals(expect, actual);
+    }
 
     @Test
     public void testExampleCase01() {
@@ -97,6 +116,68 @@ public class MinimumSwaps2 extends TestUtil {
         int actual = minimumSwaps(input);
         int expect = 46;
         assertEquals(expect, actual);
+    }
+
+
+    private int answerFromInternet(int[] arr) {
+        MyNumber[] ascArr = new MyNumber[arr.length];
+        for (int i = 0; i < arr.length; ++i) {
+            ascArr[i] = new MyNumber(i, arr[i]);
+        }
+        Arrays.sort(ascArr, new Comparator<MyNumber>() {
+
+            @Override
+            public int compare(MyNumber o1, MyNumber o2) {
+                return o1.value - o2.value;
+            }
+
+        });
+
+        int[] visited = new int[arr.length];
+        int i = 0;
+        int res = 0;
+        int count = 0;
+        while (true) {
+            if (count > 0) {
+                res += (count - 1);
+                count = 0;
+            }
+            int j = 0;
+            for (; j < visited.length; ++j) {
+                if (visited[j] == 0) {
+                    if (arr[j] == ascArr[j].value) {
+                        visited[j] = 1;
+                    } else {
+                        i = j;
+                        break;
+                    }
+                }
+            }
+            if (j >= visited.length) {
+                break;
+            }
+            //找到某個閉環
+            while (i < arr.length && visited[i] == 0) {
+                if (arr[i] != ascArr[i].value) {
+                    visited[i] = 1;
+                    i = ascArr[i].index;
+                    ++count;
+                }
+
+
+            }
+        }
+        return res;
+    }
+
+    static class MyNumber {
+        int index;
+        int value;
+
+        MyNumber(int index, int val) {
+            this.index = index;
+            this.value = val;
+        }
     }
 
 
